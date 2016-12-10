@@ -5,8 +5,10 @@ import qualified Data.Text as T
 import Data.List.Split (splitPlaces)
 import Data.List (transpose)
 
-data Status = On | Off deriving (Eq, Show, Read)
-
+data Status = On | Off  deriving (Eq, Read)
+instance Show Status where
+  show Off = " "
+  show On = "█"
 nLights n = take n $ repeat On
 
 lightN n l = nLights n ++ others
@@ -20,10 +22,11 @@ rotate n l = b ++ a
   where (a,b) = splitAt w l
         w = (length l) - n
 
-rotateMat n m l = (l'!!0) ++ rotated ++ (l'!!2)
+rotateMat n m l = (l'!!0) ++ rotated ++ end
   where l' = splitPlaces [n,1,rest] l
   	rest = length l
 	rotated = map (rotate m) (l'!!1)
+	end = if length l' == 3 then l'!!2 else []
 
 rotateY n m = transpose . rotateMat n m . transpose
 
@@ -37,11 +40,12 @@ execute (Rect a b) = lightSquare a b
 execute (Rot X n m) = rotateY n m
 execute (Rot Y n m) = rotateMat n m
 
-interpret (Left _) = [(display, Rect 0 0)]
-interpret (Right listActions) = scanl (\(acc,op) f -> (execute f acc, f)) (display, Rect 0 0) listActions
+interpret (Left _) = display
+interpret (Right listActions) = foldl (\acc f -> execute f acc) (display) listActions
 
+solve1 = length . filter (== On). concat . interpret . parseLines . T.lines
+solve2 = interpret . parseLines . T.lines
 main :: IO ()
 main = do
   text <- TIO.getContents
-  print $ matrix 3 7 Off
-  print $ interpret . parseLines . T.lines $ text
+  mapM_ print $ solve2 $ text
