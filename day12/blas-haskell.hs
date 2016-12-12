@@ -7,7 +7,6 @@ import qualified Data.Text as T
 
 data Ins = Cpy Integer Char
   | Mv Char Char
-  | Jmp Integer Integer
   | Inc Char
   | Dec Char
   | Jnz Char Integer deriving (Show, Eq)
@@ -28,10 +27,6 @@ execute state (Dec c) = incIp $ M.insert c newVal state
   where newVal = (getVal c state) - 1
 
 execute state (Cpy val c) = incIp $ M.insert c val state
-
-execute state (Jmp v1 v2) = M.insert 'i' newIp state
-  where newIp = if v1 /= 0 then ip + v1 else ip + 1
-        ip = (getVal 'i' state)
 
 execute state (Jnz c val) = M.insert 'i' newIp state
   where newIp = if testZ then ip + val else ip + 1
@@ -82,8 +77,6 @@ parseIns = do
   <|> parseJnz
   <|> parseMv
 
-
---parseText t= mapM (parseOnly parseIns) t 
 parseText t= case mapM (parseOnly parseIns) t of
 		Right x -> interpret startStatus2 x
 		Left s -> error $ s
